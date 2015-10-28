@@ -10,39 +10,40 @@ namespace SeoUrlSausage
 {
 	public class PathSqueezer
 	{
+		public static readonly string[] RESERVED_CHARS = new string[] 
+		{
+			"-", ".", "_", "~", ":", "/", "?", "#", "[", "]",
+			"@", "!", "$", "&", "'", "(", ")", "*", "+", ",",
+			";", "=", "}", ";"
+		};
+
 		public string Squeeze(string title)
 		{
-			// Remove reserved chars - this reads a lot better than a regex
-			string[] reserved =
+			if (string.IsNullOrEmpty(title))
+				return "";
+
+			string path = title;
+
+			// Remove reserved chars - doing this as an array reads a lot better than a regex
+			foreach (string token in RESERVED_CHARS)
 			{
-				"-", ".", "_", "~", ":", "/", "?", "#", "[", "]",
-				"@", "!", "$", "&", "'", "(", ")", "*", "+", ",",
-				";", "=", "}", ";"
-			};
-			foreach (string token in reserved)
-			{
-				title = title.Replace(token, "");
+				path = path.Replace(token, "");
 			}
 
 			// Remove multiple spaces
-			title = Regex.Replace(title, @"\s+", " ");
-			var builder = new StringBuilder();
+			path = Regex.Replace(path, @"\s+", " ");
 
-			// These checks looks convulated but are needed for Unicode characters that 
-			// aren't in the BMP (Basic Multilingual Plane)
-			foreach (char t in title)
+			// Turn spaces into dashes
+			path = path.Replace(" ", "-");
+
+			// Grab letters and numbers only
+			var regex = new Regex("^([a-zA-Z0-9])+$");
+			if (regex.IsMatch(path))
 			{
-				if (!Char.IsPunctuation(t) && !Char.IsSeparator(t) && !Char.IsSymbol(t) && !Char.IsControl(t))
-				{
-					builder.Append(t);
-				}
-				else if (Char.IsWhiteSpace(t))
-				{
-					builder.Append("-");
-				}
+				path = regex.Matches(path)[0].Value;
 			}
 
-			return builder.ToString();
+			return path;
 		}
 	}
 }

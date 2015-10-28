@@ -9,6 +9,11 @@ namespace SeoUrlSausage.Tests
 {
 	public class PathSqueezerTests
 	{
+		public static string[] ReservedChars
+		{
+			get { return PathSqueezer.RESERVED_CHARS; }
+		}
+
 		[Test]
 		public void should_remove_non_letters_and_digits()
 		{
@@ -58,19 +63,67 @@ namespace SeoUrlSausage.Tests
 		}
 
 		[Test]
-		public void should_replace_reserved_characters()
+		public void should_replace_reserved_characters_combined_with_spaces()
 		{
 			// Arrange
 			var urlSqueezer = new PathSqueezer();
-			string title = "this is my title? and #firstworldproblems :* :sadface=true";
+			string title = "this is my title?!! /r/science/ and #firstworldproblems :* :sadface=true";
 
 			// Act
 			string actualPath = urlSqueezer.Squeeze(title);
 
 			// Assert
-			string expectedPath = "this-is-my-title-and-firstworldproblems-sadfacetrue";
+			string expectedPath = "this-is-my-title-rscience-and-firstworldproblems-sadfacetrue";
 
 			Assert.That(actualPath, Is.EqualTo(expectedPath));
+		}
+
+		[Test]
+		public void should_remove_multiple_dashes()
+		{
+			// Arrange
+			var urlSqueezer = new PathSqueezer();
+			string title = "one-two-three--four--five and a six--seven--eight-nine------ten";
+
+			// Act
+			string actualPath = urlSqueezer.Squeeze(title);
+
+			// Assert
+			string expectedPath = "onetwothreefourfive-and-a-sixseveneightnineten";
+
+			Assert.That(actualPath, Is.EqualTo(expectedPath));
+		}
+
+		[Test]
+		[TestCaseSource("ReservedChars")]
+		public void should_remove_dashes(string character)
+		{
+			// Arrange
+			var urlSqueezer = new PathSqueezer();
+			string manyCharactersWow = new String(character[0], 10);
+            string title = string.Format("testing {0} some of {0} these {0}", manyCharactersWow);
+
+			// Act
+			string actualPath = urlSqueezer.Squeeze(title);
+
+			// Assert
+			string expectedPath = "testing-some-of-these-";
+
+			Assert.That(actualPath, Is.EqualTo(expectedPath));
+		}
+
+		[Test]
+		public void should_ignore_empty_or_null_string()
+		{
+			// Arrange
+			var urlSqueezer = new PathSqueezer();
+			string title = null;
+
+			// Act
+			string actualPath = urlSqueezer.Squeeze(title);
+
+			// Assert
+			Assert.That(actualPath, Is.EqualTo(""));
 		}
 	}
 }
